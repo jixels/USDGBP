@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>USD:GBP Exchange Rate Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    canvas {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>USD:GBP Exchange Rate (Last 12 Months)</h1>
+  <canvas id="exchangeRateChart"></canvas>
+
+  <script>
+    const ctx = document.getElementById('exchangeRateChart').getContext('2d');
+    const labels = [];
+    const data = [];
+
+    async function fetchExchangeRate() {
+      const response = await fetch('https://www.google.com/finance/quote/USD-GBP?sa=X&ved=2ahUKEwiW8Jr6uYj-AhX2gP0HHQ6oD1QQ3ecFegQINBAY');
+      const text = await response.text();
+      const regex = /"price":"([\d.]+)"/;
+      const match = text.match(regex);
+      if (match) {
+        const rate = parseFloat(match[1]);
+        const now = new Date();
+        const date = now.toISOString().split('T')[0];
+        labels.push(date);
+        data.push(rate);
+        if (labels.length > 365) {
+          labels.shift();
+          data.shift();
+        }
+        updateChart();
+      }
+    }
+
+    function updateChart() {
+      if (window.exchangeRateChart) {
+        window.exchangeRateChart.update();
+      } else {
+        window.exchangeRateChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'USD:GBP Exchange Rate',
+              data: data,
+              borderColor: 'rgba(75, 192, 192, 1)',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              fill: true,
+              tension: 0.1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                type: 'time',
+                time: {
+                  unit: 'day',
+                  tooltipFormat: 'll'
+                },
+                title: {
+                  display: true,
+                  text: 'Date'
+                }
+              },
+              y: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'Exchange Rate'
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    setInterval(fetchExchangeRate, 60000);
+    fetchExchangeRate();
+  </script>
+</body>
+</html>
